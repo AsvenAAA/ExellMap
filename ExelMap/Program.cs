@@ -14,63 +14,92 @@ namespace ExelMap
  {
      static void Main(string[] args)
      {
-         //ExellData eData = new ExellData();
-
-         var exelbook = new XLWorkbook("C:/Users/Asven/Desktop/TestExell.xlsx");
-         var exelsheet = exelbook.Worksheet(1);
-         var rows = exelsheet.RangeUsed().RowsUsed();
-
-         //string rowsNumb;
+         //Открываем xlsx файл, выбираем первый лист, задаем кодировку Windows-1251
+         var exellbook = new XLWorkbook("C:/Users/Asven/Desktop/TestExell.xlsx");
+         var exellsheet = exellbook.Worksheet(1);
          var encod = Encoding.GetEncoding(1251);
 
-         //Читает строки из файла и заносит их в список
+         //Читает строки из файла и заносит их в список, игнорирует пустые строки, end нужен в качестве точки окончания
          List<string> stIntxt = new List<string>();
          StreamReader reader = new StreamReader(@"C:/Users/Asven/Desktop/TestTxt.txt", encod);
-         string st = null;
-         while (st != "end")
+         string txtString = null;
+         while (txtString != "end")
          {
-             st = reader.ReadLine();
-             if (st != "" && st != "end")
+             txtString = reader.ReadLine();
+             if (txtString != "" && txtString != "end")
              {
-                 stIntxt.Add(st);
+                 stIntxt.Add(txtString);
              }
          }
          reader.Close();
 
-            //список объектов ExellData
-            List<ExellData> eDataObj = new List<ExellData>();
-         foreach (var row in rows)
-         {
-             eDataObj.Add(new ExellData() { Cell = $"{row.Cell(2).Value}" });
-         }
-
-         //список строк для приравнивания строки к строке
+         //список строк, которые считываются из второго столбца exell
+         var rows = exellsheet.RangeUsed().RowsUsed();//вроде все не null строки
          List<string> stObj = new List<string>();
          foreach (var row in rows)
          {
              stObj.Add($"{row.Cell(2).Value}");
          }
 
-         foreach (string sT in stObj)
+         //Сравнивает строки из txt со страками из xlsx
+         int count = 2;
+         foreach (string stringInExell in stObj)
          {
-             for (int i = 0; i < 12; i++)
+             for (int i = 0; i < stIntxt.Count; i++)
              {
-                 string sTxt = stIntxt[i];
-                 if (sTxt == sT)
+                 string stringTxt = stIntxt[i];
+                 if (stringTxt == stringInExell)
                  {
-                     exelsheet.Cell($"C{i + 1}").Value = stIntxt[i + 1];
+                     string readWriteCount = stIntxt[i + 1].Remove(0, 9);
+                     int readWriteCountInt = int.Parse(readWriteCount);
+                     switch (readWriteCountInt)
+                     {
+                         case 0:
+                             exellsheet.Cell($"C{count}").Value = "readonly";
+                             break;
+                         case 1:
+                             exellsheet.Cell($"C{count}").Value = "writable";
+                             break;
+                         default:
+                             exellsheet.Cell($"C{count}").Value = "Invalid variable value";
+                             break;
+                     }
+                     count++;
+                     break;
                  }
 
              }
          }
-         exelbook.Save();
-         Console.ReadKey();
+        var exellbook2 = new XLWorkbook("C:/Users/Asven/Desktop/TestExell2.xlsx");
+        var exellsheet2 = exellbook2.Worksheet(1);
+        var rows2 = exellsheet2.RangeUsed().RowsUsed();
+        List<string> stObj2 = new List<string>();
+        foreach (var row2 in rows2)
+        {
+            stObj2.Add($"{row2.Cell(2).Value}");
+        }
+        List<string> Obj = new List<string>();
+        foreach (var row2 in rows2)
+        {
+            Obj.Add($"{row2.Cell(4).Value}");
+        }
+        count = 1;
+        foreach (string sT in stObj)
+        {
+            for(int i = 0; i < stObj2.Count; i++)
+             {
+                    if (sT == stObj2[i])
+                    {
+                        exellsheet.Cell($"D{count}").Value = Obj[i];
+                        count++;
+                        break;
+                    }
+            }
+        }
+        
+        exellbook.Save();
+        Console.ReadKey();
 
      }
  }
- class ExellData
- {
-     public string Cell { get; set; }
- }
-
 }
